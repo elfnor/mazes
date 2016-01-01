@@ -343,6 +343,34 @@ class Grid3dDiag(Grid):
         row = random.randint(0, self.rows - 1)
         column = random.randint(0, self.columns - 1)
         return self.grid[level][row][column] 
+        
+    def eachEdge(self):
+        """
+        generator thst yields each potential path only once
+        yields (cell, direction, type)
+        where type 0 is a link, type is no link and type 3 
+        is on the edge of the maze, that is cell has no neighbor
+        """
+        seen = set()
+        for i, cell in enumerate(self.eachCell()):
+            for dirn in cell.neighborDirns:
+                if cell.neighborDict[dirn]:
+                    if cell.linked(cell.neighborDict[dirn]):
+                        typeID = 0
+                    else:
+                        typeID = 1    
+                    celln = cell.neighborDict[dirn]    
+                    neighbor_i = celln.level*self.rows*self.columns + celln.row*self.columns + celln.column
+                    ekey = [i, neighbor_i]
+                    ekey.sort()
+                    ekey = tuple(ekey)
+                    #print(seen)
+                    if ekey not in seen:
+                        seen.add(ekey)
+                        yield (cell, dirn, typeID)
+                else:
+                    typeID = 2    
+                    yield (cell, dirn, typeID)
             
 ## carving functions
 
