@@ -1,0 +1,135 @@
+##### Changing default control scheme, making an in-game controls menu
+
+The Input.py module is programmed to, by default, get it's input from the mouse and WASD keys. So I set up a controller object
+(It's shaped like a giant video game controller in the editor, you can't miss it (although it's invisible in-game)). Anyway,
+this controller object uses a script (Controller.py) to access the Input.py module and change it's control input settings
+(there's a variable in the Input.py module that determines what control scheme is used) according to the controller object's 
+integer game property called "Control Scheme". Every frame, the controller object runs the script to change the control setting
+according to this property. A property value of 1 indicates the "ArrowKeys/WASD" control scheme, a value of 2 indicates the
+"WASD/Mouse control scheme", and a value of 3 indicates the  "Gamepad" control scheme (probably only works for Xbox 360 
+controllers). So, to change the default control scheme, just change the value of this property in the logic panel.
+
+You might wonder why I set up the controls cheme to be controlled by a game property rather than the Config file (like every 
+other setting in the template). The reason is that this method allows people with no Python coding knowledge to set up their
+own method for changing the control scheme in-game using only logic bricks (Just use the property actuator to update the value
+of the "Control Scheme: property). Currently the controller object has a logic bricks set up to use the F1, F2, and F3 keys to
+set the property to 1,2, or 3 respectively. You can replace those logic bricks with your own logic setup. This allows you to
+create a menu for changing the controls in-game, or use whatever method you want.
+
+
+##### Creating deadly objects and falling death zones
+
+To create an object that kills the player, give it a game property called "Death", and he will die upon touching it.
+
+The setup for a falling death zone is more complex. First I'll explain how to model one, then how to set it up.
+
+To model a falling death zone, I suggest you make a large box enclosing the whole level, with triangle mesh collision bounds
+(because triangle mesh collision bounds are hollow, unlike cube or sphere bounds). You can use more complex shapes than a box, or
+even use multiple objects as death zones.
+
+To make it kill the player, add a property called "Death" to the death zone. Also, you would normally want a falling death zone 
+to have no collision, however, setting it's physics mode to  "No Collision" will make the player ignore it entirely. To get
+around this, set it's collision mode to Static and enable the "ghost" option in the physics panel. Then add to it a game property
+called "NoStand". Now the player will pass through it instead of landing on it. You can also apply this method to make intangible
+deadly objects, like flames, that kill the player but don't collide with him.
+
+There is a death zone enclosing the whole level in the template file, it is just hidden. Press alt+H to view it in the editor.
+
+
+##### Creating a checkpoint, changing checkpoint activation distance
+
+Simply create the checkpoint object, and give it a game property called "Checkpoint"
+Once the player gets within 3 units of the checkpoint, it will become activated and he will respawn at it upon death.
+(you can adjust the activation distance by changing the distance fields on the Near sensor (named "Checkpoint") of the
+player's collision mesh. You could replace the near sensor with a sensor of a different type, but it must also be 
+named "Checkpoint")
+
+The checkpoint object should be set to Static physics mode(if you set it to No Collision mode, the player will never detect it).
+However, if you want the player to be able to pass through it, you can enable the "ghost" option in the physics panel (make sure
+the "actor" option just above it is also enabled), then give it a game property called "NoStand".
+
+Note that when a player respawns at a checkpoint, he will respawn in the exact location of it's origin. So make sure to place its 
+origin far enough above the ground so that the player won't clip into the ground. Also, if you didn't make the checkpoint a "ghost",
+then the origin should be placed far enough away from the checkpoint so that the player won't clip into the checkpoint itself.
+
+
+##### Resetting the scene upon respawning
+
+Note that there is an option in the Config.py file called "ResetSceneUponDeath". By default it is set to False, so when the player
+dies and respawns the scene will continue as usual. If you would like the scene to reset whenever the player respawns, set it to 
+True. 
+
+
+##### Creating Gravity Switches
+
+Each gravswitch in my demo level consists of two parts: a visible mesh object, and an empty object that handles all the 
+logic (so if you move one part, you need to move the other). This is so you can rotate the visual mesh and empty object
+independently (this is important because the empty's rotation determines the resultant direction of gravity).
+If you create a game based off of my template, here's how to add gravity switches to it.
+
+You could append one of my gravswitch empties into your game and duplicate it, or you could set up your own from scratch.
+To set up your own gravity switch from scratch, create an empty object. In the logic panel add a near sensor that detects
+when the player gets close to the switch (you could use any sensor, if you want), and hook it up to a Python controller that
+executes "Gravswitch.main"(the python controller must be set to module mode). Finally, add a String property called 
+"PlayerName", and in the string field, type in the name of the player's collision mesh. The gravswitch script will read this
+property to know which object to mess with.
+
+Now, rotate the gravswitch so that it's local negative Z axis points in the desired direction of gravity. Now, whenever
+the player gets close to the gravswitch, his direction of gravity will change.
+
+
+##### Creating a Planetoid
+
+A planetoid consists of only one object: the planetoid itself. When the player gets within a specified distance of the planetoid,
+he will be sucked into its gravity. He can escape by getting a specified distance away from the planet (i.e. by jumping on a 
+spring). Here's how you set one up.
+
+First, make the planetoid mesh object. Then, in the logic panel, add an always sensor, and enable true level triggering 
+for it. Link it to a Python controller that executes "GravPlent.main" (python controller must be set to module mode).
+Add a String property called "PlayerName", and in the string field, type in the name of the player's collision mesh.
+Add a Float property called "PullDist", and give it the value of the distance from the planet at which you want the player
+to be captured by it's gravitational field. 
+Add a Float property called "ReleaseDist", and give it the value of the distance from the planet at which you want the
+player to be released from the planet's gravity, when he's already in its gravitational field.
+
+Finally, add a String property called "ReferenceObj". Assign to it the name of the object you want to use as the reference object.
+The orientation of the reference object determines the direction gravity will be pointing when the player is released from the 
+planet's gravitational field, similar to how a gravswitch works.
+
+
+##### Stair behavior
+
+The StepSmoothing variable not only smooths the movement on steps, but it also happens to
+determine how steep your staircases can be without running the risk of the player detaching from 
+them when descending. The ratio between the horizontal/vertical distance of each step should not be less than
+the StepSmoothing factor, otherwise you run the risk of the player coming off of the stairs.
+
+So, if you have a stepSmooth value of .5, then the horizontal distance of each step on a staircase can not be less
+than 0.5 times the vertical distance of the step.
+
+Note that this rule doesn't apply to singular steps, only staircases. And, of course, if a step is taller than the
+Step config value, the player will always detach from it when stepping down it.
+
+
+##### Camera "obstacle avoidance"
+
+The camera system is capable of a crude form of obstacle avoidance: it just zooms in if something gets between it
+and the player. For an object to block the camera in this manner, you must give it a logic property called "CamBlock".
+
+
+##### Speed modifier surfaces
+
+To add a speed modifier to a surface, add a Float game property to it's object called 'SpeedModifier', and set it's
+value to the desired speed multiplier (0.5 will make the player go half as fast, for instance). This is useful for stairs,
+because it would look unnatural for the player to dash up stairs at full speed. I use a value of 0.5 for staircases.
+
+
+##### Un-grabbable and un-stand-able surfaces
+
+If you want a certain surface to not be grabbable as a ledge, give it a logic property called "NoGrab".
+Likewise, if you want a surface to not be stand-able, give it a property called "NoStand". If the player tries to stand on
+an un-stand-able surface, he wil remain in his fall state and just slide down it.
+
+##### This template was designed for 60 FPS
+
+Changing the target framerate won't break any functionality, but it will cause speeds and velocities to differ a bit (which ideally shouldn't happen). Of course, it works just fine with performance-related frame drops.
